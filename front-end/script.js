@@ -1,4 +1,4 @@
-const apiURL = '';
+const apiURL = 'https://aswindev8991-8080.theiadockernext-0-labs-prod-theiak8s-4-tor01.proxy.cognitiveclass.ai';
 let students = [];
 let Ordercount = 1;
 let deleteRow = [];
@@ -95,12 +95,12 @@ function calculateTotal() {
         totalField = document.getElementById(`orderTotal${i}`);
         if (totalField) {
             if (totalField.value)
-                total = total + parseInt(totalField.value)
+                total = total + parseFloat(totalField.value)
         }
 
     }
 
-    document.getElementById('totalOrderValue').value = total;
+    document.getElementById('totalOrderValue').value = total.toFixed(2);
 }
 
 
@@ -148,36 +148,34 @@ function fillProductId(count) {
 
 
 function showOrderSuggestion(products, count) {
+    const suggestion = document.getElementById(`OrderSuggestion${count}`);
+    const productName = document.getElementById(`orderProductName${count}`);
+    const productId = document.getElementById(`orderProductId${count}`);
+    const productPrice = document.getElementById(`orderProductPrice${count}`);
+    const quantity = document.getElementById(`orderProductQuantity${count}`);
 
-
-    suggestion = document.getElementById(`OrderSuggestion${count}`);
-    productName = document.getElementById(`orderProductName${count}`);
-    productId = document.getElementById(`orderProductId${count}`);
-    productPrice = document.getElementById(`orderProductPrice${count}`);
-    quantity = document.getElementById(`orderProductQuantity${count}`);
     suggestion.innerHTML = "";
-    for (product of products) {
-        div = document.createElement('div');
-        div.classList.add('suggestionCard');
-        h6 = document.createElement('h6');
-        h6.textContent = product.name
-        div.appendChild(h6);
-        div.addEventListener('click', (function (product) {
-            return function () {
-                quantity.value = '1';
-                productName.value = product.name;
-                productId.value = product.id;
-                productPrice.value = product.price;
-                suggestion.innerHTML = "";
-                calculatePrice(count);
 
-            };
-        })(product));
+    for (const product of products) {
+        const div = document.createElement('div');
+        div.classList.add('suggestionCard');
+
+        const h6 = document.createElement('h6');
+        h6.textContent = product.name;
+        div.appendChild(h6);
+
+        div.addEventListener('click', () => {
+            quantity.value = '1';
+            productName.value = product.name;
+            productId.value = product.id;
+            productPrice.value = product.price;
+            suggestion.innerHTML = "";
+            calculatePrice(count);
+        });
+
         suggestion.appendChild(div);
     }
 }
-
-
 
 function calculatePrice(count) {
 
@@ -326,6 +324,12 @@ async function createData(products, storeId) {
     const tableBody = document.getElementById('tableBody');
     tableBody.innerHTML = '';
     products.forEach(product => {
+        const storeInventory = product.inventory.find(
+            item => Number(item.storeId) === Number(storeId)
+        );
+
+        if (!storeInventory) return;
+
 
         const row = document.createElement('tr');
 
@@ -351,7 +355,7 @@ async function createData(products, storeId) {
 
         const stockLevel = document.createElement('td');
         stockLevel.classList.add('expandable');
-        stockLevel.textContent = product.inventory[0].stockLevel;
+        stockLevel.textContent = storeInventory.stockLevel;
 
         const reviewCol = document.createElement('td');
         const reviewBtn = document.createElement('button');
@@ -369,7 +373,7 @@ async function createData(products, storeId) {
         button.classList.add('btn', 'btn-warning');
         button.textContent = 'Edit';
         button.addEventListener('click', () => {
-            window.location = `edit-product.html?productId=${product.id}&storeId=${storeId}&stockLevel=${product.inventory[0].stockLevel}`;
+            window.location = `edit-product.html?productId=${product.id}&storeId=${storeId}&stockLevel=${storeInventory.stockLevel}`;
 
         });
         buttoncolumn.appendChild(button);
@@ -379,7 +383,7 @@ async function createData(products, storeId) {
         const delbutton = document.createElement('button')
         delbutton.classList.add('btn', 'btn-danger');
         delbutton.textContent = 'Delete';
-        delbutton.value = product.id;
+        delbutton.value = storeInventory.id;
         delbutton.addEventListener('click', function () {
             showModal(this.value, product.name, 2);
         });
@@ -938,7 +942,7 @@ async function placeOrder(event) {
                 location.href = "index.html?id=navBar4";
             }
             else {
-                alert(data.error);
+                alert(data.error || data.Error || "Request failed");
             }
         })
 
